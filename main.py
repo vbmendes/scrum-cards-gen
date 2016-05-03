@@ -9,6 +9,7 @@ import math
 
 from loremipsum import generate_paragraph
 
+from reportlab.lib.colors import Color
 from reportlab.lib.enums import TA_LEFT, TA_CENTER
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -22,8 +23,8 @@ spacing = 0.5*cm
 
 MARGIN_LEFT = spacing
 MARGIN_RIGHT = spacing
-MARGIN_BETWEEN_X = spacing
-MARGIN_BETWEEN_Y = spacing
+MARGIN_BETWEEN_X = 0
+MARGIN_BETWEEN_Y = 0
 MARGIN_TOP = spacing
 MARGIN_BOTTOM = spacing
 
@@ -38,13 +39,32 @@ style_titulo = ParagraphStyle(
     fontName='Esphimere Bold',
     fontSize=12
     )
+style_titulo_1 = ParagraphStyle(
+    'titulo_1',
+    parent=style_titulo,
+    fontSize=20,
+    leading=23
+    )
+style_titulo_2 = ParagraphStyle(
+    'titulo_2',
+    parent=style_titulo,
+    fontSize=16,
+    leading=18
+    )
+style_titulo_3 = ParagraphStyle(
+    'titulo_3',
+    parent=style_titulo,
+    fontSize=12,
+    leading=13
+    )
 style_descricao = ParagraphStyle(
     'descricao',
     parent=styles['Normal'],
     alignment=TA_LEFT,
     fontName='Arial',
     fontSize=8,
-    leading=8
+    leading=8,
+    textColor=Color(0.3,0.3,0.3,1)
     )
 
 pdfmetrics.registerFont(TTFont('Esphimere Bold', 'fonts/Esphimere Bold.otf'))
@@ -95,23 +115,30 @@ def draw_pdf(filename, cards):
         origin = (col*(rect_width + MARGIN_BETWEEN_X), row*(rect_height + MARGIN_BETWEEN_Y))
         c.rect(origin[0], origin[1], rect_width, rect_height)
         padding = cm/4
-        height_id = 20
+        height_id = 16
         c.setFont('Esphimere Bold', height_id)
         c.setFillColorRGB(0.5,0.5,0.5)
         c.drawString(origin[0] + padding, origin[1] + rect_height - padding/2 - height_id, str(card['id']))
 
         height_titulo = style_titulo.fontSize
         titulo = card['titulo']
-        p = Paragraph(titulo, style=style_titulo)
+        titulo = truncate_string(card['titulo'], 170)
+        if len(titulo) < 50:
+            style = style_titulo_1
+        elif len(titulo) < 95:
+            style = style_titulo_2
+        else:
+            style = style_titulo_3
+        p = Paragraph(titulo, style=style)
         p.wrapOn(c, rect_width - padding*2, height_titulo * 3)
-        p.drawOn(c, origin[0] + padding, origin[1] + rect_height - padding * 4.5 - height_id - height_titulo)
+        p.drawOn(c, origin[0] + padding, origin[1] + rect_height - padding * 6.5 - height_id - height_titulo)
 
         height_descricao = style_descricao.fontSize
         # TODO! Improve String split
-        descricao = truncate_string(card['descricao'], 600)
+        descricao = truncate_string(card['descricao'], 700)
         p = Paragraph(descricao, style=style_descricao)
         p.wrapOn(c, rect_width - padding*2, height_titulo * 6.5)
-        p.drawOn(c, origin[0] + padding, origin[1] + rect_height - padding * 4.5 - height_id - height_titulo - height_titulo * 6.5)
+        p.drawOn(c, origin[0] + padding, origin[1] + rect_height - padding * 7 - height_id - height_titulo - height_titulo * 6.5)
 
         #row -= 1
         col += 1
